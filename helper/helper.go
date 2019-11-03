@@ -2,6 +2,7 @@ package helper
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 )
 
@@ -66,4 +67,13 @@ func YamlMapToJsonMap(m YamlMap) map[string]interface{} {
 		res[fmt.Sprintf("%v", k)] = yamlValueToJsonValue(v)
 	}
 	return res
+}
+
+func IsHttpPortAvailable(host string, port int) bool {
+	_, err := http.Get(fmt.Sprintf("http://%s:%d", host, port))
+	if err != nil {
+		// fmt.Printf("is port available connection err: %v\n", err)
+		return false
+	}
+	return true
 }

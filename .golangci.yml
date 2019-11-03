@@ -1,0 +1,18 @@
+linters:
+  enable:
+    - golint
+    - gosec
+    - gofmt
+    - gocritic
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  golint:
+    min-confidence: 0
+
+issues:
+  exclude-use-default: false
+  exclude:
+    - should have a package comment
+    - should have comment or be unexported

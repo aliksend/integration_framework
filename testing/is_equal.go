@@ -1,54 +1,14 @@
 package testing
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/novalagung/go-eek"
-	"integration_tests/helper"
-	"math/rand"
-	"net/http"
+	"gopkg.in/yaml.v2"
+	"integration_framework/helper"
 	"reflect"
 	"strconv"
 	"time"
 )
-
-func MakeRequest(query string, modifyRequest *string) (*http.Response, error) {
-	payload, err := json.Marshal(map[string]interface{}{
-		"query": query,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("unable to marshal payload: %v", err)
-	}
-	request, err := http.NewRequest("POST", "http://localhost:8080/api", bytes.NewReader(payload))
-	if err != nil {
-		return nil, fmt.Errorf("unable to create http request: %v", err)
-	}
-
-	if modifyRequest == nil {
-		request.Header.Add("auth-token", "test-auth-token")
-	} else if *modifyRequest != "" {
-		vm := eek.New()
-		vm.SetName(fmt.Sprintf("modify request %d", rand.Int()))
-		vm.ImportPackage("net/http")
-		vm.DefineVariable(eek.Var{Name: "Request", Type: "*http.Request"})
-		vm.PrepareEvaluation(*modifyRequest)
-		err = vm.Build()
-		if err != nil {
-			return nil, fmt.Errorf("unable to build modify request: %v", err)
-		}
-		_, err = vm.Evaluate(eek.ExecVar{"Request": request})
-		if err != nil {
-			return nil, fmt.Errorf("unable to modify request: %v", err)
-		}
-	}
-	client := &http.Client{}
-	resp, err := client.Do(request)
-	if err != nil {
-		return nil, fmt.Errorf("unable to make request to api: %v", err)
-	}
-	return resp, nil
-}
 
 func IsEqual(actualResult interface{}, expectedResult interface{}) error {
 	return anyTypeMatcherFunc(actualResult, expectedResult, "")
@@ -59,7 +19,7 @@ func actualExpectedError(actual interface{}, expected interface{}, keyMsg string
 }
 
 func anyTypeMatcherFunc(actualInterface interface{}, expectedInterface interface{}, actualKey string) (err error) {
-	// fmt.Printf("\nmatch any type %q\nactual   %#v\nexpected %#v\n", actualKey, actualInterface, expectedInterface)
+	fmt.Printf("\nmatch any type %q\nactual   %#v\nexpected %#v\n", actualKey, actualInterface, expectedInterface)
 
 	keyMsg := ""
 	if actualKey != "" {
@@ -200,4 +160,22 @@ func isEqualTime(actual time.Time, expected string, keyMsg string) error {
 		return fmt.Errorf("%s\n Actual value  : %#v (%T)\n Expected value: %#v (%T)", keyMsg, formattedActual, formattedActual, expected, expected)
 	}
 	return nil
+}
+
+func IsEqualYamlMaps(actual []byte, expected []byte) (bool, error) {
+	// fmt.Printf(">> is equal yaml %s %s", actual, expected)
+	var actualValue, expectedValue map[interface{}]interface{}
+	err := yaml.Unmarshal(actual, &actualValue)
+	if err != nil {
+		return false, fmt.Errorf("unable to unmarshal actual: %v", err)
+	}
+	err = yaml.Unmarshal(expected, &expectedValue)
+	if err != nil {
+		return false, fmt.Errorf("unable to unmarshal expected: %v", err)
+	}
+	err = IsEqual(helper.YamlMapToJsonMap(actualValue), helper.YamlMapToJsonMap(expectedValue))
+	if err != nil {
+		fmt.Println(">> not equal!", err)
+	}
+	return err != nil, nil
 }
