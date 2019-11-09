@@ -21,6 +21,7 @@ type Tester struct {
 	requester               plugins.IRequester
 	expectedResponse        *map[interface{}]interface{}
 	expectedCode            int
+	saveResponseTo          string
 }
 
 func (pc *ParsedConfig) createTester(testCaseName string, servicePreparers []plugins.IServicePreparer, serviceCheckers []plugins.IServiceChecker, testCase *application_config.TestCase, requester plugins.IRequester) error {
@@ -32,6 +33,7 @@ func (pc *ParsedConfig) createTester(testCaseName string, servicePreparers []plu
 		requester:               requester,
 		expectedResponse:        testCase.ExpectedResponse,
 		expectedCode:            testCase.ExpectedCode,
+		saveResponseTo:          testCase.SaveResponseTo,
 	})
 	return nil
 }
@@ -51,33 +53,40 @@ func (t Tester) Exec() error {
 		}
 	}
 
-	err := t.checkRequest()
-	if err != nil {
-		return fmt.Errorf("unable to check request: %v", err)
-	}
-
 	variables := make(map[string]interface{})
 	saveResult := func(key string, value interface{}) {
 		variables[key] = value
 	}
 
+	err := t.checkRequest(saveResult, variables)
+	if err != nil {
+		return fmt.Errorf("unable to check request: %v", err)
+	}
+
 	for _, serviceChecker := range t.serviceCheckers {
 		err := serviceChecker.CheckService(saveResult, variables)
 		if err != nil {
-			return fmt.Errorf("unable to prepare service: %v", err)
+			return fmt.Errorf("unable to check service: %v", err)
 		}
 	}
 
 	return nil
 }
 
-func (t Tester) checkRequest() error {
+func (t Tester) checkRequest(saveResult plugins.FnResultSaver, variables map[string]interface{}) error {
 	responseBody, statusCode, err := t.requester.MakeRequest()
 	if err != nil {
 		return fmt.Errorf("unable to make request: %v", err)
 	}
 
+	actualBody := make(map[string]interface{})
+	err = json.Unmarshal(responseBody, &actualBody)
+	if err != nil {
+		return fmt.Errorf("unable to unmarshal response body %s: %v", responseBody, err)
+	}
+
 	if t.expectedResponse != nil {
+		fmt.Printf(">> actual response %#v\n", actualBody)
 		// expected response defined ...
 		if *t.expectedResponse == nil {
 			// ... but it defined like "null", not like map
@@ -87,11 +96,6 @@ func (t Tester) checkRequest() error {
 		} else {
 			// ... and it defined like map
 			expectedBody := helper.YamlMapToJsonMap(*t.expectedResponse)
-			actualBody := make(map[string]interface{})
-			err := json.Unmarshal(responseBody, &actualBody)
-			if err != nil {
-				return fmt.Errorf("unable to unmarshal response body %s: %v", responseBody, err)
-			}
 			err = IsEqual(actualBody, expectedBody)
 			if err != nil {
 				return fmt.Errorf("invalid response: %v", err)
@@ -102,6 +106,9 @@ func (t Tester) checkRequest() error {
 		if statusCode != t.expectedCode {
 			return fmt.Errorf("invalid response status code: expected %d to equal %d", statusCode, t.expectedCode)
 		}
+	}
+	if t.saveResponseTo != "" {
+		saveResult(t.saveResponseTo, actualBody)
 	}
 
 	return nil

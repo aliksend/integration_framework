@@ -121,6 +121,10 @@ func (pc *ParsedConfig) createTesters(cases application_config.TestCases, parent
 	for tCN, testCase := range cases {
 		testCaseName := casePrefix + tCN
 
+		if testCase.Skip {
+			continue
+		}
+
 		// process only-cases
 		// if this test not exists in onlyCases then preparers and checkers should be created but only for children
 		allowedToProcess := true
@@ -136,34 +140,35 @@ func (pc *ParsedConfig) createTesters(cases application_config.TestCases, parent
 		}
 
 		// create preparers
-		var servicePreparers []plugins.IServicePreparer
+		servicePreparers := append([]plugins.IServicePreparer{}, parentPreparers...)
 		for serviceName, servicePreparerParams := range testCase.PrepareServices {
 			service, ok := pc.Services[serviceName]
 			if !ok {
 				return fmt.Errorf("unable to find service with name %q", serviceName)
 			}
+			// fmt.Printf("-- create service %q preparer %#v for test case %q\n", serviceName, servicePreparerParams, testCaseName)
 			servicePreparer, err := service.Preparer(servicePreparerParams)
 			if err != nil {
 				return fmt.Errorf("unable to create preparer for service %q: %v", serviceName, err)
 			}
 			servicePreparers = append(servicePreparers, servicePreparer)
 		}
-		servicePreparers = append(parentPreparers, servicePreparers...)
 
 		// create checkers
-		var serviceCheckers []plugins.IServiceChecker
-		for serviceName, serviceCheckerParams := range testCase.CheckServices {
-			service, ok := pc.Services[serviceName]
-			if !ok {
-				return fmt.Errorf("unable to find service with name %q", serviceName)
+		serviceCheckers := append([]plugins.IServiceChecker{}, parentCheckers...)
+		for _, checkServicesMap := range testCase.CheckServices {
+			for serviceName, serviceCheckerParams := range checkServicesMap {
+				service, ok := pc.Services[serviceName]
+				if !ok {
+					return fmt.Errorf("unable to find service with name %q", serviceName)
+				}
+				serviceChecker, err := service.Checker(serviceCheckerParams)
+				if err != nil {
+					return fmt.Errorf("unable to create checker for service %q: %v", serviceName, err)
+				}
+				serviceCheckers = append(serviceCheckers, serviceChecker)
 			}
-			serviceChecker, err := service.Checker(serviceCheckerParams)
-			if err != nil {
-				return fmt.Errorf("unable to create checker for service %q: %v", serviceName, err)
-			}
-			serviceCheckers = append(serviceCheckers, serviceChecker)
 		}
-		serviceCheckers = append(parentCheckers, serviceCheckers...)
 
 		if allowedToProcess {
 			// create testers for general cases
@@ -183,7 +188,7 @@ func (pc *ParsedConfig) createTesters(cases application_config.TestCases, parent
 				if err != nil {
 					return fmt.Errorf("unable to create request for tester %q: %v", testCaseName, err)
 				}
-				fmt.Printf("**** created requster for test case %q: %#v\n", testCaseName, requester)
+				// fmt.Printf("**** created requster for test case %q: %#v\n", testCaseName, requester)
 				err = pc.createTester(testCaseName, servicePreparers, serviceCheckers, testCase, requester)
 				if err != nil {
 					return fmt.Errorf("unable to create tester %q: %v", testCaseName, err)

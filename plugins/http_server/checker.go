@@ -8,7 +8,7 @@ import (
 )
 
 type ICheck interface {
-	Check(serviceUrl string) error
+	Check(serviceUrl string, variables map[string]interface{}) error
 }
 
 type FnUnmarshal = func(data []byte, dst interface{}) error
@@ -19,11 +19,6 @@ type CheckCall struct {
 
 	Route string
 	Body  interface{}
-}
-
-type ActualCall struct {
-	Route string `json:"route"`
-	Body  string `json:"body"`
 }
 
 func (s *Service) Checker(checkConfig interface{}) (plugins.IServiceChecker, error) {
@@ -83,7 +78,7 @@ type CheckConfig struct {
 
 func (hcc CheckConfig) CheckService(saveResult plugins.FnResultSaver, variables map[string]interface{}) error {
 	for i, check := range hcc.checks {
-		err := check.Check(fmt.Sprintf("http://localhost:%d/", hcc.service.port))
+		err := check.Check(fmt.Sprintf("http://localhost:%d/", hcc.service.port), variables)
 		if err != nil {
 			return fmt.Errorf("unable to check http %d: %v", i, err)
 		}

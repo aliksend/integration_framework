@@ -14,6 +14,7 @@ type ClearPrepare struct {
 }
 
 func (pp ClearPrepare) Prepare(conn *sqlx.DB) error {
+	fmt.Println(".. postgres preparer clear")
 	var tableNames []string
 	err := conn.Select(&tableNames, "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema' AND tablename != 'schema_migrations'")
 	if err != nil {

@@ -3,6 +3,7 @@ package http_server
 import (
 	"encoding/json"
 	"fmt"
+	"integration_framework/helper"
 	"integration_framework/testing"
 	"io/ioutil"
 	"net/http"
@@ -18,7 +19,12 @@ type CallsCheck struct {
 	calls []CheckCall
 }
 
-func (c CallsCheck) Check(serviceUrl string) error {
+type ActualCall struct {
+	Route string `json:"route"`
+	Body  string `json:"body"`
+}
+
+func (c CallsCheck) Check(serviceUrl string, variables map[string]interface{}) error {
 	resp, err := http.Get(serviceUrl + "__calls")
 	if err != nil {
 		return fmt.Errorf("unable to send request: %v", err)
@@ -46,7 +52,11 @@ func (c CallsCheck) Check(serviceUrl string) error {
 		if actualCall.Route != check.Route {
 			return fmt.Errorf("check #%d failed: route not matched. expcted %q, actual %q", i, check.Route, actualCall.Route)
 		}
-		err = testing.IsEqual(parsedActualBody, check.Body)
+		checkBody, err := helper.ApplyInterpolationForObject(check.Body, variables)
+		if err != nil {
+			return fmt.Errorf("unable to apply interpolation: %v", err)
+		}
+		err = testing.IsEqual(parsedActualBody, checkBody)
 		if err != nil {
 			return fmt.Errorf("check #%d failed: body not matched: %v", i, err)
 		}

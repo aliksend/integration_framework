@@ -61,7 +61,12 @@ func IterateOverConfigFiles(path string, callback func(filename string) error) e
 		}
 
 		for _, file := range files {
-			if !file.IsDir() {
+			if file.IsDir() {
+				shouldReadDir := shouldReadDirWithName(file.Name())
+				if !shouldReadDir {
+					continue
+				}
+			} else {
 				shouldLoadFile := shouldLoadFileWithName(file.Name())
 				if !shouldLoadFile {
 					continue
@@ -130,6 +135,13 @@ func shouldLoadFileWithName(filename string) bool {
 		return false
 	}
 	if filename[0] == '_' {
+		return false
+	}
+	return true
+}
+
+func shouldReadDirWithName(dirname string) bool {
+	if dirname[0] == '_' {
 		return false
 	}
 	return true

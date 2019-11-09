@@ -41,7 +41,6 @@ func init() {
 				return nil, fmt.Errorf("request headers should be map")
 			}
 			headersMap := helper.YamlMapToJsonMap(headersYamlMap)
-			fmt.Printf(">> new graphql requester with headers map %#v\n", headersMap)
 			requester.headers = make(map[string]string)
 			for headerName, headerValue := range headersMap {
 				requester.headers[headerName] = fmt.Sprintf("%v", headerValue)
@@ -70,7 +69,6 @@ type GraphqlRequester struct {
 }
 
 func (r *GraphqlRequester) applyDefaults() {
-	fmt.Printf("r apply defaults %#v\n", r)
 	if r.method == "" {
 		r.method = r.defaults.Method
 	}
@@ -80,12 +78,10 @@ func (r *GraphqlRequester) applyDefaults() {
 	if r.headers == nil {
 		r.headers = r.defaults.Headers
 	}
-	fmt.Printf("r applied defaults %#v\n", r)
 }
 
 func (r *GraphqlRequester) MakeRequest() (responseBody []byte, statusCode int, err error) {
 	r.applyDefaults()
-	fmt.Printf(">>>>>>>>>>>> MAKE REQUEST %q %q %q %#v\n", r.query, r.url, r.method, r.headers)
 	payload, err := json.Marshal(map[string]interface{}{
 		"query": r.query,
 	})

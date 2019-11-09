@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"integration_framework/helper"
 )
 
 func NewExecPrepare(exec string) *ExecPrepare {
@@ -16,7 +17,12 @@ type ExecPrepare struct {
 }
 
 func (pp ExecPrepare) Prepare(conn *sqlx.DB) error {
-	_, err := conn.Exec(pp.exec)
+	query, err := helper.ApplyInterpolation(pp.exec, nil)
+	if err != nil {
+		return fmt.Errorf("unable to interpolate query: %v", err)
+	}
+	fmt.Println(".. postgres preparer exec", query)
+	_, err = conn.Exec(query)
 	if err != nil {
 		return fmt.Errorf("unable to run %q on postgres: %v", pp.exec, err)
 	}

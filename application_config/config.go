@@ -31,8 +31,10 @@ type TestCase struct {
 	// also it can be map (so field will be pointer to map)
 	ExpectedResponse *map[interface{}]interface{} `yaml:"expected_response"`
 	ExpectedCode     int                          `yaml:"expected_code"`
-	CheckServices    map[string]interface{}       `yaml:"check_services"`
+	SaveResponseTo   string                       `yaml:"save_response_to"`
+	CheckServices    []map[string]interface{}     `yaml:"check_services"`
 	Only             bool                         `yaml:"only"`
+	Skip             bool                         `yaml:"skip"`
 	Cases            TestCases                    `yaml:"cases"`
 	GeneralCases     *GeneralCasesSelector        `yaml:"general_cases"`
 }
@@ -212,40 +214,54 @@ func (tcs *TestCases) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (tc *TestCase) Join(otherTestCase *TestCase, prefix string) error {
-	if otherTestCase.PrepareServices != nil && tc.PrepareServices != nil {
-		return fmt.Errorf("prepare_services section can not be re-defined")
+	if otherTestCase.PrepareServices != nil {
+		if tc.PrepareServices != nil {
+			return fmt.Errorf("prepare_services section can not be re-defined")
+		}
+		tc.PrepareServices = otherTestCase.PrepareServices
 	}
-	tc.PrepareServices = otherTestCase.PrepareServices
 
-	if otherTestCase.CheckServices != nil && tc.CheckServices != nil {
-		return fmt.Errorf("check_services section can not be re-defined")
+	if otherTestCase.CheckServices != nil {
+		if tc.CheckServices != nil {
+			return fmt.Errorf("check_services section can not be re-defined")
+		}
+		tc.CheckServices = otherTestCase.CheckServices
 	}
-	tc.CheckServices = otherTestCase.CheckServices
 
-	if otherTestCase.Request != nil && tc.Request != nil {
-		return fmt.Errorf("request can not be re-defined")
+	if otherTestCase.Request != nil {
+		if tc.Request != nil {
+			return fmt.Errorf("request can not be re-defined")
+		}
+		tc.Request = otherTestCase.Request
 	}
-	tc.Request = otherTestCase.Request
 
-	if otherTestCase.ModifyRequest != nil && tc.ModifyRequest != nil {
-		return fmt.Errorf("modify_request can not be re-defined")
+	if otherTestCase.ModifyRequest != nil {
+		if tc.ModifyRequest != nil {
+			return fmt.Errorf("modify_request can not be re-defined")
+		}
+		tc.ModifyRequest = otherTestCase.ModifyRequest
 	}
-	tc.ModifyRequest = otherTestCase.ModifyRequest
 
-	if otherTestCase.ExpectedResponse != nil && tc.ExpectedResponse != nil {
-		return fmt.Errorf("expected_response can not be re-defined")
+	if otherTestCase.ExpectedResponse != nil {
+		if tc.ExpectedResponse != nil {
+			return fmt.Errorf("expected_response can not be re-defined")
+		}
+		tc.ExpectedResponse = otherTestCase.ExpectedResponse
 	}
-	tc.ExpectedResponse = otherTestCase.ExpectedResponse
 
-	if otherTestCase.ExpectedCode != 0 && tc.ExpectedCode != 0 {
-		return fmt.Errorf("expected code can not be re-defined")
+	if otherTestCase.ExpectedCode != 0 {
+		if tc.ExpectedCode != 0 {
+			return fmt.Errorf("expected code can not be re-defined")
+		}
+		tc.ExpectedCode = otherTestCase.ExpectedCode
 	}
-	tc.ExpectedCode = otherTestCase.ExpectedCode
 
-	if otherTestCase.GeneralCases != nil && tc.GeneralCases != nil {
-		return fmt.Errorf("expected code can not be re-defined")
+	if otherTestCase.GeneralCases != nil {
+		if tc.GeneralCases != nil {
+			return fmt.Errorf("expected code can not be re-defined")
+		}
+		tc.GeneralCases = otherTestCase.GeneralCases
 	}
-	tc.GeneralCases = otherTestCase.GeneralCases
 
 	if otherTestCase.Only {
 		tc.Only = true

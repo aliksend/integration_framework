@@ -14,19 +14,6 @@ func (pc *ParsedConfig) RunTests() (exitCode int) {
 
 	for _, tester := range pc.Testers {
 		fmt.Printf("---- %s\n", tester.Name)
-		if len(pc.onlyCases) != 0 {
-			found := false
-			for _, onlyCase := range pc.onlyCases {
-				if onlyCase == tester.Name {
-					found = true
-					break
-				}
-			}
-			if !found {
-				fmt.Printf("skipped\n")
-				continue
-			}
-		}
 
 		err := tester.Exec()
 		if err != nil {
@@ -38,9 +25,9 @@ func (pc *ParsedConfig) RunTests() (exitCode int) {
 	}
 
 	if len(failedTests) == 0 {
-		fmt.Println("==== all tests passed")
+		fmt.Printf("==== %d test(s) passed\n", len(pc.Testers))
 	} else {
-		fmt.Printf("%d test(s) fails\n", len(failedTests))
+		fmt.Printf("%d test(s) of %d fails\n", len(failedTests), len(pc.Testers))
 		for failedTestName, failedTestError := range failedTests {
 			fmt.Printf("==== #%q\n", failedTestName)
 			fmt.Printf("%v\n", failedTestError)

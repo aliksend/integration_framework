@@ -71,7 +71,7 @@ func (a *Application) Start() error {
 	}
 
 	exitCode, err := a.start()
-	log.Println(">> returned from start", exitCode, err)
+	log.Println(">> returned from start:", exitCode, err)
 
 	time.Sleep(2 * time.Second)
 	a.shutdown()
@@ -130,54 +130,18 @@ func (a *Application) startWatcher() error {
 }
 
 func (a *Application) start() (exitCode int, err error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return 1, fmt.Errorf("unable to get cwd: %v", err)
+	}
+
 	for {
 		fmt.Println("--> start The Cycle")
 
-		cwd, err := os.Getwd()
+		err := a.runTests(cwd)
 		if err != nil {
-			return 1, fmt.Errorf("unable to get cwd: %v", err)
+			fmt.Printf("run tests error: %v\n", err)
 		}
-		config, err := application_config.LoadConfig(a.args.configurationPath, cwd)
-		if err != nil {
-			return 1, fmt.Errorf("unable to load config: %v", err)
-		}
-		a.config = config
-
-		parsedConfig, err := testing.ParseConfig(config)
-		if err != nil {
-			return 1, fmt.Errorf("unable to parse config: %v", err)
-		}
-		a.parsedConfig = parsedConfig
-
-		if a.launcher != nil && a.launcherType != config.Launcher {
-			err := a.launcher.Shutdown()
-			if err != nil {
-				return 1, fmt.Errorf("unable to shutdown launcher: %v", err)
-			}
-			a.launcher = nil
-		}
-		if a.launcher == nil {
-			launcher, err := plugins.NewLauncher(config.Launcher, a.tmpDirectory)
-			if err != nil {
-				return 1, fmt.Errorf("unable to create launcher: %v", err)
-			}
-			a.launcher = launcher
-			a.launcherType = config.Launcher
-		}
-
-		err = a.launcher.ConfigUpdated(a.config, parsedConfig.Services, parsedConfig.EnvironmentInitializers)
-		if err != nil {
-			return 1, fmt.Errorf("unable to re-launch tests: %v", err)
-		}
-
-		for serviceName, service := range parsedConfig.Services {
-			err := service.Start()
-			if err != nil {
-				return 1, fmt.Errorf("unable to start service %q: %v", serviceName, err)
-			}
-		}
-
-		exitCode = parsedConfig.RunTests()
 
 		if a.args.runOnce {
 			return exitCode, nil
@@ -198,6 +162,55 @@ func (a *Application) start() (exitCode int, err error) {
 			}
 		}
 	}
+}
+
+func (a *Application) runTests(cwd string) error {
+	config, err := application_config.LoadConfig(a.args.configurationPath, cwd)
+	if err != nil {
+		return fmt.Errorf("unable to load config: %v", err)
+	}
+	a.config = config
+
+	parsedConfig, err := testing.ParseConfig(config)
+	if err != nil {
+		return fmt.Errorf("unable to parse config: %v", err)
+	}
+	a.parsedConfig = parsedConfig
+
+	if a.launcher != nil && a.launcherType != config.Launcher {
+		err := a.launcher.Shutdown()
+		if err != nil {
+			return fmt.Errorf("unable to shutdown launcher: %v", err)
+		}
+		a.launcher = nil
+	}
+	if a.launcher == nil {
+		launcher, err := plugins.NewLauncher(config.Launcher, a.tmpDirectory)
+		if err != nil {
+			return fmt.Errorf("unable to create launcher: %v", err)
+		}
+		a.launcher = launcher
+		a.launcherType = config.Launcher
+	}
+
+	// TODO уметь останавливать текущий запуск, останавливаться и запускаться заново если конфиг обновился
+	err = a.launcher.ConfigUpdated(a.config, parsedConfig.Services, parsedConfig.EnvironmentInitializers)
+	if err != nil {
+		return fmt.Errorf("unable to re-launch tests: %v", err)
+	}
+
+	for serviceName, service := range parsedConfig.Services {
+		err := service.Start()
+		if err != nil {
+			return fmt.Errorf("unable to start service %q: %v", serviceName, err)
+		}
+	}
+
+	exitCode := parsedConfig.RunTests()
+	if exitCode != 0 {
+		return fmt.Errorf("tests exited with code %d", exitCode)
+	}
+	return nil
 }
 
 func (a *Application) setupGracefulExit() {

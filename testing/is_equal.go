@@ -11,7 +11,17 @@ import (
 )
 
 func IsEqual(actualResult interface{}, expectedResult interface{}) error {
-	return anyTypeMatcherFunc(actualResult, expectedResult, "")
+	err := anyTypeMatcherFunc(actualResult, expectedResult, "")
+	if err != nil {
+		return err
+	}
+	// TODO один проход функции - только матчинг actual-а на expected. Но хочется проверять полную вложенность.
+	//      как вариант - вызывать второй раз функцию "наоброт", но тогда нужно поправить возвращаемые ошибки
+	// err := anyTypeMatcherFunc(expectedResult, actualResult, "")
+	// if err != nil {
+	// 	return err
+	// }
+	return nil
 }
 
 func actualExpectedError(actual interface{}, expected interface{}, keyMsg string) error {
@@ -19,7 +29,7 @@ func actualExpectedError(actual interface{}, expected interface{}, keyMsg string
 }
 
 func anyTypeMatcherFunc(actualInterface interface{}, expectedInterface interface{}, actualKey string) (err error) {
-	fmt.Printf("\nmatch any type %q\nactual   %#v\nexpected %#v\n", actualKey, actualInterface, expectedInterface)
+	// fmt.Printf("\nmatch any type %q\nactual   %#v\nexpected %#v\n", actualKey, actualInterface, expectedInterface)
 
 	keyMsg := ""
 	if actualKey != "" {
