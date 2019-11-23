@@ -7,7 +7,7 @@ import (
 type Config struct {
 	Launcher     string                   `yaml:"launcher"`
 	Application  *ApplicationConfig       `yaml:"application"`
-	Environment  map[string]interface{}   `yaml:"environment"`
+	Environment  map[string]string        `yaml:"environment"`
 	GeneralCases map[string]GeneralCase   `yaml:"general_cases"`
 	Services     map[string]ServiceConfig `yaml:"services"`
 	Cases        TestCases                `yaml:"cases"`
@@ -31,7 +31,6 @@ type TestCase struct {
 	// also it can be map (so field will be pointer to map)
 	ExpectedResponse *map[interface{}]interface{} `yaml:"expected_response"`
 	ExpectedCode     int                          `yaml:"expected_code"`
-	SaveResponseTo   string                       `yaml:"save_response_to"`
 	CheckServices    []map[string]interface{}     `yaml:"check_services"`
 	Only             bool                         `yaml:"only"`
 	Skip             bool                         `yaml:"skip"`
@@ -49,6 +48,7 @@ type ApplicationConfig struct {
 	Path            string          `yaml:"path"`
 	RequestType     string          `yaml:"request_type"`
 	RequestDefaults RequestDefaults `yaml:"request_defaults"`
+	Dockerize       bool            `yaml:"dockerize"`
 }
 
 type RequestDefaults struct {

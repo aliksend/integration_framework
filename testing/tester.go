@@ -9,43 +9,31 @@ import (
 )
 
 type createTesterContext struct {
-	EnvironmentInitializers []plugins.IEnvironmentInitializer
-	Services                map[string]plugins.IService
+	Services map[string]plugins.IService
 }
 
 type Tester struct {
-	Name                    string
-	servicePreparers        []plugins.IServicePreparer
-	serviceCheckers         []plugins.IServiceChecker
-	environmentInitializers []plugins.IEnvironmentInitializer
-	requester               plugins.IRequester
-	expectedResponse        *map[interface{}]interface{}
-	expectedCode            int
-	saveResponseTo          string
+	Name             string
+	servicePreparers []plugins.IServicePreparer
+	serviceCheckers  []plugins.IServiceChecker
+	requester        plugins.IRequester
+	expectedResponse *map[interface{}]interface{}
+	expectedCode     int
 }
 
 func (pc *ParsedConfig) createTester(testCaseName string, servicePreparers []plugins.IServicePreparer, serviceCheckers []plugins.IServiceChecker, testCase *application_config.TestCase, requester plugins.IRequester) error {
 	pc.Testers = append(pc.Testers, Tester{
-		Name:                    testCaseName,
-		servicePreparers:        servicePreparers,
-		serviceCheckers:         serviceCheckers,
-		environmentInitializers: pc.EnvironmentInitializers,
-		requester:               requester,
-		expectedResponse:        testCase.ExpectedResponse,
-		expectedCode:            testCase.ExpectedCode,
-		saveResponseTo:          testCase.SaveResponseTo,
+		Name:             testCaseName,
+		servicePreparers: servicePreparers,
+		serviceCheckers:  serviceCheckers,
+		requester:        requester,
+		expectedResponse: testCase.ExpectedResponse,
+		expectedCode:     testCase.ExpectedCode,
 	})
 	return nil
 }
 
 func (t Tester) Exec() error {
-	for _, environmentInitializer := range t.environmentInitializers {
-		err := environmentInitializer.InitEnvironment()
-		if err != nil {
-			return fmt.Errorf("unable to initialize environment: %v", err)
-		}
-	}
-
 	for _, servicePreparer := range t.servicePreparers {
 		err := servicePreparer.PrepareService()
 		if err != nil {
@@ -84,9 +72,11 @@ func (t Tester) checkRequest(saveResult plugins.FnResultSaver, variables map[str
 	if err != nil {
 		return fmt.Errorf("unable to unmarshal response body %s: %v", responseBody, err)
 	}
+	saveResult("response", actualBody)
 
 	if t.expectedResponse != nil {
 		fmt.Printf(">> actual response %#v\n", actualBody)
+		fmt.Printf(">> expected response %#v\n", *t.expectedResponse)
 		// expected response defined ...
 		if *t.expectedResponse == nil {
 			// ... but it defined like "null", not like map
@@ -106,9 +96,6 @@ func (t Tester) checkRequest(saveResult plugins.FnResultSaver, variables map[str
 		if statusCode != t.expectedCode {
 			return fmt.Errorf("invalid response status code: expected %d to equal %d", statusCode, t.expectedCode)
 		}
-	}
-	if t.saveResponseTo != "" {
-		saveResult(t.saveResponseTo, actualBody)
 	}
 
 	return nil

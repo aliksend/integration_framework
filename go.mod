@@ -1,7 +1,12 @@
 module integration_framework
 
 require (
+	github.com/emersion/go-smtp v0.12.0
 	github.com/fsnotify/fsnotify v1.4.7
+	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/gin-gonic/gin v1.4.0 // indirect
+	github.com/go-sql-driver/mysql v1.4.1
+	github.com/jasonlvhit/gocron v0.0.0-20191111122648-5c21418a78e8 // indirect
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v1.2.0

@@ -13,6 +13,17 @@ import (
 
 func init() {
 	plugins.DefineRequester("graphql", func(request interface{}, defaults application_config.RequestDefaults) (plugins.IRequester, error) {
+		requestQuery, ok := request.(string)
+		if ok {
+			return &GraphqlRequester{
+				query:    requestQuery,
+				method:   "",
+				url:      "",
+				headers:  nil,
+				defaults: defaults,
+			}, nil
+		}
+
 		requestMap, ok := request.(helper.YamlMap)
 		if !ok {
 			return nil, fmt.Errorf("request should be map")

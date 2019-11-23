@@ -31,7 +31,7 @@ func (s *Service) Preparer(params interface{}) (plugins.IServicePreparer, error)
 			}
 			valueMap, ok := value.(map[string]interface{})
 			if !ok {
-				return nil, fmt.Errorf("http service config should be map, but now it is %T (%#v)", value, value)
+				return nil, fmt.Errorf("http service config should be map, but it is %T (%#v)", value, value)
 			}
 			prepares = append(prepares, NewConfigPrepare(valueMap))
 		default:

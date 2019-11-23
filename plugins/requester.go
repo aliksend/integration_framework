@@ -21,13 +21,12 @@ func init() {
 	requesterConstructors = make(map[string]RequesterConstructor)
 }
 
-func DefineRequester(name string, constructor RequesterConstructor) error {
+func DefineRequester(name string, constructor RequesterConstructor) {
 	_, ok := requesterConstructors[name]
 	if ok {
-		return fmt.Errorf("requester with name %q already defined", name)
+		panic(fmt.Errorf("requester with name %q already defined", name))
 	}
 	requesterConstructors[name] = constructor
-	return nil
 }
 
 func GetRequesterConstructor(name string) (RequesterConstructor, bool) {

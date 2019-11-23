@@ -118,7 +118,7 @@ func loadConfigFile(path string) (*Config, error) {
 func joinConfigs(configs []*Config) (*Config, error) {
 	res := &Config{
 		GeneralCases: make(map[string]GeneralCase),
-		Environment:  make(map[string]interface{}),
+		Environment:  make(map[string]string),
 		Services:     make(map[string]ServiceConfig),
 	}
 	for _, config := range configs {

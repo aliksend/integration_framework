@@ -5,6 +5,7 @@ import (
 	"integration_framework/application_config"
 	"integration_framework/plugins"
 	"sort"
+	"strings"
 )
 
 type IDockerComposeConfigModifier interface {
@@ -15,12 +16,13 @@ type IServiceWithDockerComposeConfigGenerator interface {
 	GenerateDockerComposeConfig(tmpDirectory string, serviceName string, applicationService *DockerComposeService) (dockerComposeServiceName string, dockerComposeService *DockerComposeService, configs *ServiceConfigs, err error)
 }
 
-func NewDockerComposeConfig(tmpDirectory string, config *application_config.Config, services map[string]plugins.IService, environmentInitializers []plugins.IEnvironmentInitializer) (*DockerComposeConfig, []ServiceConfigs, error) {
+func NewDockerComposeConfig(tmpDirectory string, config *application_config.Config, services map[string]plugins.IService) (*DockerComposeConfig, []ServiceConfigs, error) {
 	dockerComposeConfig := DockerComposeConfig{
 		Version:  "3.4",
 		Services: make(map[string]*DockerComposeService),
 	}
 	applicationService := DockerComposeService{
+		config: config.Application,
 		Build: DockerComposeServiceBuild{
 			Context:    config.Application.Path,
 			Dockerfile: "Dockerfile.prod",
@@ -28,17 +30,9 @@ func NewDockerComposeConfig(tmpDirectory string, config *application_config.Conf
 		Ports: []string{
 			"8080:8080",
 		},
-		Environment: make(map[string]string),
+		Environment: config.Environment,
 		Restart:     "on-failure",
-	}
-	for _, environmentInitializer := range environmentInitializers {
-		dockerComposeConfigModifier, ok := environmentInitializer.(IDockerComposeConfigModifier)
-		if ok {
-			err := dockerComposeConfigModifier.ModifyApplicationConfig(&applicationService)
-			if err != nil {
-				return nil, nil, fmt.Errorf("unable to modify application config using environment initializer: %v", err)
-			}
-		}
+		User:        "${UID}:${GID}",
 	}
 	var servicesConfigs []ServiceConfigs
 	var servicesNames []string
@@ -53,11 +47,13 @@ func NewDockerComposeConfig(tmpDirectory string, config *application_config.Conf
 		}
 		dockerComposeServiceName, dockerComposeService, serviceConfigs, err := service.GenerateDockerComposeConfig(tmpDirectory, serviceName, &applicationService)
 		if err != nil {
-			return nil, nil, fmt.Errorf("unable to generate docker compose service for external service %q", serviceName)
+			return nil, nil, fmt.Errorf("unable to generate docker compose service for external service %q: %v", serviceName, err)
 		}
-		dockerComposeConfig.Services[dockerComposeServiceName] = dockerComposeService
-		if serviceConfigs != nil {
-			servicesConfigs = append(servicesConfigs, *serviceConfigs)
+		if dockerComposeService != nil {
+			dockerComposeConfig.Services[dockerComposeServiceName] = dockerComposeService
+			if serviceConfigs != nil {
+				servicesConfigs = append(servicesConfigs, *serviceConfigs)
+			}
 		}
 	}
 	dockerComposeConfig.Services["application"] = &applicationService
@@ -70,6 +66,7 @@ type DockerComposeServiceBuild struct {
 }
 
 type DockerComposeService struct {
+	config      *application_config.ApplicationConfig
 	Image       string                    `yaml:"image,omitempty"`
 	Build       DockerComposeServiceBuild `yaml:"build,omitempty"`
 	Restart     string                    `yaml:"restart,omitempty"`
@@ -79,6 +76,8 @@ type DockerComposeService struct {
 	DependsOn   []string                  `yaml:"depends_on,omitempty"`
 	Command     string                    `yaml:"command,omitempty"`
 	WorkingDir  string                    `yaml:"working_dir,omitempty"`
+	User        string                    `yaml:"user,omitempty"`
+	waitFor     []string
 }
 
 type DockerComposeConfig struct {
@@ -88,4 +87,12 @@ type DockerComposeConfig struct {
 
 type ServiceConfigs struct {
 	Files map[string][]byte
+}
+
+func (s *DockerComposeService) AddDependency(serviceName string, protocol string, port int) {
+	s.DependsOn = append(s.DependsOn, serviceName)
+	if s.config.Dockerize {
+		s.waitFor = append(s.waitFor, fmt.Sprintf("-wait %s://%s:%d -timeout 60s", protocol, serviceName, port))
+		s.Environment["DOCKERIZE_ARGS"] = strings.Join(s.waitFor, " ")
+	}
 }

@@ -30,8 +30,8 @@ type Launcher struct {
 	cancelContext                    func()
 }
 
-func (l *Launcher) createConfig(config *application_config.Config, services map[string]plugins.IService, environmentInitializers []plugins.IEnvironmentInitializer) (configChanged bool, err error) {
-	dockerComposeConfig, servicesConfigs, err := NewDockerComposeConfig(l.tmpDirectory, config, services, environmentInitializers)
+func (l *Launcher) createConfig(config *application_config.Config, services map[string]plugins.IService) (configChanged bool, err error) {
+	dockerComposeConfig, servicesConfigs, err := NewDockerComposeConfig(l.tmpDirectory, config, services)
 	if err != nil {
 		return false, fmt.Errorf("unable to generate docker-compose config: %v", err)
 	}
@@ -111,8 +111,8 @@ func (l *Launcher) launchApplication(services map[string]plugins.IService) error
 	return nil
 }
 
-func (l *Launcher) ConfigUpdated(config *application_config.Config, services map[string]plugins.IService, environmentInitializers []plugins.IEnvironmentInitializer) error {
-	updated, err := l.createConfig(config, services, environmentInitializers)
+func (l *Launcher) ConfigUpdated(config *application_config.Config, services map[string]plugins.IService) error {
+	updated, err := l.createConfig(config, services)
 	if err != nil {
 		return fmt.Errorf("unable to create config: %v", err)
 	}

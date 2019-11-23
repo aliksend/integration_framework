@@ -17,6 +17,11 @@ func (s *Service) GenerateDockerComposeConfig(tmpDirectory string, serviceName s
 		simpleServerConfig["routes"] = helper.YamlMapToJsonMap(m)
 	}
 	simpleServerConfig["service_name"] = serviceName
+	simpleServerConfig["response_content_type"] = s.params["response_content_type"]
+	initialServerConfig, ok := s.params["config"].(helper.YamlMap)
+	if ok {
+		simpleServerConfig["config"] = helper.YamlMapToJsonMap(initialServerConfig)
+	}
 	simpleServerConfigBytes, err := json.Marshal(simpleServerConfig)
 	if err != nil {
 		return "", nil, nil, fmt.Errorf("unable to marshal simple server %s config: %v", serviceName, err)
@@ -29,13 +34,12 @@ func (s *Service) GenerateDockerComposeConfig(tmpDirectory string, serviceName s
 	}
 	service := docker_compose.DockerComposeService{
 		Build: docker_compose.DockerComposeServiceBuild{
-			Context: "/Users/aliksend/Documents/simple_server", // TODO use simple_server docker image instead of build directory
+			Context: "/home/aliksend/Documents/simple_server", // TODO use simple_server docker image instead of build directory
 		},
 		Volumes: []string{
 			fmt.Sprintf("%s:%s:ro", filepath.Join(tmpDirectory, serviceConfigFilename), "/config.json"),
 		},
-		WorkingDir: "/app",
-		Restart:    "on-failure",
+		Restart: "on-failure",
 		Environment: map[string]string{
 			"PORT": servicePort,
 		},
@@ -43,7 +47,7 @@ func (s *Service) GenerateDockerComposeConfig(tmpDirectory string, serviceName s
 			fmt.Sprintf("%d:%s", s.port, servicePort),
 		},
 	}
-	applicationService.DependsOn = append(applicationService.DependsOn, dockerComposeServiceName)
+	applicationService.AddDependency(dockerComposeServiceName, "tcp", 8080) // http checker will check that `/` returns smth like 200 and fails if it returns 404
 	if s.env.EnvStr != "" {
 		applicationService.Environment[s.env.EnvStr] = fmt.Sprintf("http://%s:%s/", dockerComposeServiceName, servicePort)
 	} else if s.env.EnvMap != nil {

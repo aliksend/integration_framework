@@ -149,6 +149,9 @@ func (a *Application) start() (exitCode int, err error) {
 
 		for {
 			time.Sleep(5 * time.Second)
+			if a.shutdownRequested {
+				return 0, nil
+			}
 			if a.configUpdated {
 				a.configUpdated = false
 				err := a.startWatcher()
@@ -156,9 +159,6 @@ func (a *Application) start() (exitCode int, err error) {
 					return 1, fmt.Errorf("unable to re-create watcher: %v", err)
 				}
 				break
-			}
-			if a.shutdownRequested {
-				return 0, nil
 			}
 		}
 	}
@@ -194,7 +194,7 @@ func (a *Application) runTests(cwd string) error {
 	}
 
 	// TODO уметь останавливать текущий запуск, останавливаться и запускаться заново если конфиг обновился
-	err = a.launcher.ConfigUpdated(a.config, parsedConfig.Services, parsedConfig.EnvironmentInitializers)
+	err = a.launcher.ConfigUpdated(a.config, parsedConfig.Services)
 	if err != nil {
 		return fmt.Errorf("unable to re-launch tests: %v", err)
 	}

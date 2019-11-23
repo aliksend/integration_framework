@@ -31,13 +31,12 @@ func init() {
 	serviceConstructors = make(map[string]serviceConstructor)
 }
 
-func DefineService(serviceType string, constructor serviceConstructor) error {
+func DefineService(serviceType string, constructor serviceConstructor) {
 	_, ok := serviceConstructors[serviceType]
 	if ok {
-		return fmt.Errorf("service with serviceType %q already defined", serviceType)
+		panic(fmt.Errorf("service with serviceType %q already defined", serviceType))
 	}
 	serviceConstructors[serviceType] = constructor
-	return nil
 }
 
 func NewService(serviceName string, serviceType string, port int, env application_config.ServiceDefinitionEnv, params map[string]interface{}) (IService, error) {

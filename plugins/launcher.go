@@ -6,7 +6,7 @@ import (
 )
 
 type ILauncher interface {
-	ConfigUpdated(config *application_config.Config, services map[string]IService, environmentInitializers []IEnvironmentInitializer) error
+	ConfigUpdated(config *application_config.Config, services map[string]IService) error
 	Shutdown() error
 }
 
@@ -18,13 +18,12 @@ func init() {
 	launchersConstructors = make(map[string]launchersConstructor)
 }
 
-func DefineLauncher(name string, constructor launchersConstructor) error {
+func DefineLauncher(name string, constructor launchersConstructor) {
 	_, ok := launchersConstructors[name]
 	if ok {
-		return fmt.Errorf("launcher with name %q already defined", name)
+		panic(fmt.Errorf("launcher with name %q already defined", name))
 	}
 	launchersConstructors[name] = constructor
-	return nil
 }
 
 func NewLauncher(name string, tmpDirectory string) (ILauncher, error) {

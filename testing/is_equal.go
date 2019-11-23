@@ -41,6 +41,9 @@ func anyTypeMatcherFunc(actualInterface interface{}, expectedInterface interface
 		if !ok {
 			return actualExpectedError(actualInterface, expected, keyMsg)
 		}
+		if len(expected) != len(actualArray) {
+			return actualExpectedError(len(actualArray), len(expected), fmt.Sprintf("invalid length of key %q.", actualKey))
+		}
 		for i, actualArrayValue := range actualArray {
 			err = anyTypeMatcherFunc(actualArrayValue, expected[i], fmt.Sprintf("%s.[%d]", actualKey, i))
 			if err != nil {
@@ -51,6 +54,9 @@ func anyTypeMatcherFunc(actualInterface interface{}, expectedInterface interface
 		actualArray, ok := actualInterface.([]interface{})
 		if !ok {
 			return actualExpectedError(actualInterface, expected, keyMsg)
+		}
+		if len(expected) != len(actualArray) {
+			return actualExpectedError(len(actualArray), len(expected), fmt.Sprintf("invalid length of key %q.", actualKey))
 		}
 		for i, actualArrayValue := range actualArray {
 			err = anyTypeMatcherFunc(actualArrayValue, expected[i], fmt.Sprintf("%s.[%d]", actualKey, i))

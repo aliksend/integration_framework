@@ -12,11 +12,7 @@ func ParseConfig(config *application_config.Config) (*ParsedConfig, error) {
 		config:    config,
 		onlyCases: getOnlyCases(config.Cases, ""),
 	}
-	err := res.createEnvironmentInitializers()
-	if err != nil {
-		return nil, fmt.Errorf("unable to create environment initializers: %v", err)
-	}
-	err = res.createServices()
+	err := res.createServices()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create services: %v", err)
 	}
@@ -37,25 +33,13 @@ func ParseConfig(config *application_config.Config) (*ParsedConfig, error) {
 }
 
 type ParsedConfig struct {
-	Services                map[string]plugins.IService
-	Testers                 []Tester
-	EnvironmentInitializers []plugins.IEnvironmentInitializer
+	Services map[string]plugins.IService
+	Testers  []Tester
 
 	onlyCases              []string
 	config                 *application_config.Config
 	requesterConstructor   plugins.RequesterConstructor
 	generalCasesRequesters map[string]plugins.IRequester
-}
-
-func (pc *ParsedConfig) createEnvironmentInitializers() error {
-	for environmentInitializerName, environmentInitializerParams := range pc.config.Environment {
-		environmentInitializer, err := plugins.NewEnvironmentInitializer(environmentInitializerName, environmentInitializerParams)
-		if err != nil {
-			return fmt.Errorf("unable to create environment initializer %q: %v", environmentInitializerName, err)
-		}
-		pc.EnvironmentInitializers = append(pc.EnvironmentInitializers, environmentInitializer)
-	}
-	return nil
 }
 
 func (pc *ParsedConfig) createServices() error {
