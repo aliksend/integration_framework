@@ -17,11 +17,11 @@ func (s *Service) Checker(checkConfig interface{}) (plugins.IServiceChecker, err
 	}
 	var checkers []ICheck
 	for _, configInterface := range configsList {
-		configYaml, ok := configInterface.(helper.YamlMap)
+		configYaml, ok := helper.IsYamlMap(configInterface)
 		if !ok {
 			return nil, fmt.Errorf("service check for filesystem must be map, but it is %T (%#v)", configInterface, configInterface)
 		}
-		configMap := helper.YamlMapToJsonMap(configYaml)
+		configMap := configYaml.ToMap()
 		for checkName, params := range configMap {
 			switch checkName {
 			case "exists":

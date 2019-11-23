@@ -158,6 +158,8 @@ func anyTypeMatcherFunc(actualInterface interface{}, expectedInterface interface
 				return actualExpectedError(actualInterface, expected, keyMsg)
 			}
 		}
+	case helper.YamlMap:
+		return anyTypeMatcherFunc(actualInterface, expected.ToMap(), keyMsg)
 	default:
 		if expected != actualInterface {
 			return actualExpectedError(actualInterface, expected, keyMsg)
@@ -180,7 +182,7 @@ func isEqualTime(actual time.Time, expected string, keyMsg string) error {
 
 func IsEqualYamlMaps(actual []byte, expected []byte) (bool, error) {
 	// fmt.Printf(">> is equal yaml %s %s", actual, expected)
-	var actualValue, expectedValue map[interface{}]interface{}
+	var actualValue, expectedValue helper.YamlMap
 	err := yaml.Unmarshal(actual, &actualValue)
 	if err != nil {
 		return false, fmt.Errorf("unable to unmarshal actual: %v", err)
@@ -189,7 +191,7 @@ func IsEqualYamlMaps(actual []byte, expected []byte) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("unable to unmarshal expected: %v", err)
 	}
-	err = IsEqual(helper.YamlMapToJsonMap(actualValue), helper.YamlMapToJsonMap(expectedValue))
+	err = IsEqual(actualValue.ToMap(), expectedValue.ToMap())
 	if err != nil {
 		fmt.Println(">> not equal!", err)
 	}

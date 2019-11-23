@@ -22,12 +22,12 @@ type CheckCall struct {
 }
 
 func (s *Service) Checker(checkConfig interface{}) (plugins.IServiceChecker, error) {
-	checkYaml, ok := checkConfig.(helper.YamlMap)
+	checkYaml, ok := helper.IsYamlMap(checkConfig)
 	if !ok {
 		return nil, fmt.Errorf("http check config should be map")
 	}
 	var checks []ICheck
-	check := helper.YamlMapToJsonMap(checkYaml)
+	check := checkYaml.ToMap()
 	for action, value := range check {
 		switch action {
 		case "calls":

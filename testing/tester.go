@@ -17,7 +17,7 @@ type Tester struct {
 	servicePreparers []plugins.IServicePreparer
 	serviceCheckers  []plugins.IServiceChecker
 	requester        plugins.IRequester
-	expectedResponse *map[interface{}]interface{}
+	expectedResponse *helper.YamlMap
 	expectedCode     int
 }
 
@@ -85,7 +85,7 @@ func (t Tester) checkRequest(saveResult plugins.FnResultSaver, variables map[str
 			}
 		} else {
 			// ... and it defined like map
-			expectedBody := helper.YamlMapToJsonMap(*t.expectedResponse)
+			expectedBody := (*t.expectedResponse).ToMap()
 			err = IsEqual(actualBody, expectedBody)
 			if err != nil {
 				return fmt.Errorf("invalid response: %v", err)

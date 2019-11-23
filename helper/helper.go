@@ -43,12 +43,12 @@ func FillEnvironment(dst *map[string]string, paramToEnvVarNameMap map[string]int
 	return nil
 }
 
-type YamlMap = map[interface{}]interface{}
+type YamlMap map[interface{}]interface{}
 
 func yamlValueToJsonValue(v interface{}) interface{} {
-	yamlMap, ok := v.(YamlMap)
+	yamlMap, ok := IsYamlMap(v)
 	if ok {
-		return YamlMapToJsonMap(yamlMap)
+		return yamlMap.ToMap()
 	}
 	slice, ok := v.([]interface{})
 	if ok {
@@ -61,12 +61,20 @@ func yamlValueToJsonValue(v interface{}) interface{} {
 	return v
 }
 
-func YamlMapToJsonMap(m YamlMap) map[string]interface{} {
+func (m YamlMap) ToMap() map[string]interface{} {
 	res := make(map[string]interface{})
 	for k, v := range m {
 		res[fmt.Sprintf("%v", k)] = yamlValueToJsonValue(v)
 	}
 	return res
+}
+
+func IsYamlMap(v interface{}) (YamlMap, bool) {
+	m, ok := v.(map[interface{}]interface{})
+	if !ok {
+		return nil, false
+	}
+	return YamlMap(m), true
 }
 
 func IsHttpPortAvailable(host string, port int) bool {

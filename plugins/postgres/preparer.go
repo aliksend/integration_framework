@@ -18,11 +18,11 @@ func (s *Service) Preparer(param interface{}) (plugins.IServicePreparer, error) 
 	}
 	var prepares []IPrepare
 	for _, iconfig := range configsList {
-		configYaml, ok := iconfig.(helper.YamlMap)
+		configYaml, ok := helper.IsYamlMap(iconfig)
 		if !ok {
 			return nil, fmt.Errorf("prepare item must be map")
 		}
-		config := helper.YamlMapToJsonMap(configYaml)
+		config := configYaml.ToMap()
 		for key, value := range config {
 			switch key {
 			case "exec":

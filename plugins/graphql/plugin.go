@@ -24,7 +24,7 @@ func init() {
 			}, nil
 		}
 
-		requestMap, ok := request.(helper.YamlMap)
+		requestMap, ok := helper.IsYamlMap(request)
 		if !ok {
 			return nil, fmt.Errorf("request should be map")
 		}
@@ -47,11 +47,11 @@ func init() {
 
 		headers, ok := requestMap["headers"]
 		if ok {
-			headersYamlMap, ok := headers.(helper.YamlMap)
+			headersYamlMap, ok := helper.IsYamlMap(headers)
 			if !ok {
 				return nil, fmt.Errorf("request headers should be map")
 			}
-			headersMap := helper.YamlMapToJsonMap(headersYamlMap)
+			headersMap := headersYamlMap.ToMap()
 			requester.headers = make(map[string]string)
 			for headerName, headerValue := range headersMap {
 				requester.headers[headerName] = fmt.Sprintf("%v", headerValue)

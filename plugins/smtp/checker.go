@@ -11,12 +11,12 @@ type ICheck interface {
 }
 
 func (s *Service) Checker(param interface{}) (plugins.IServiceChecker, error) {
-	checkConfigYaml, ok := param.(helper.YamlMap)
+	checkConfigYaml, ok := helper.IsYamlMap(param)
 	if !ok {
 		return nil, fmt.Errorf("service check for smtp must be map, but it is %T (%#v)", param, param)
 	}
 	var checkers []ICheck
-	for checkName, check := range helper.YamlMapToJsonMap(checkConfigYaml) {
+	for checkName, check := range checkConfigYaml.ToMap() {
 		switch checkName {
 		case "mails":
 			checkParams, ok := check.(map[string]interface{})

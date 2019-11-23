@@ -11,12 +11,12 @@ type IPrepare interface {
 }
 
 func (s *Service) Preparer(params interface{}) (plugins.IServicePreparer, error) {
-	prepareYaml, ok := params.(helper.YamlMap)
+	prepareYaml, ok := helper.IsYamlMap(params)
 	if !ok {
 		return nil, fmt.Errorf("http prepare config should be map")
 	}
 	var prepares []IPrepare
-	prepare := helper.YamlMapToJsonMap(prepareYaml)
+	prepare := prepareYaml.ToMap()
 	for action, value := range prepare {
 		switch action {
 		case "calls":

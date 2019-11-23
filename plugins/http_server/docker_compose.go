@@ -12,15 +12,15 @@ func (s *Service) GenerateDockerComposeConfig(tmpDirectory string, serviceName s
 	dockerComposeServiceName = "http_" + serviceName
 	servicePort := "8080"
 	simpleServerConfig := make(map[string]interface{})
-	m, ok := s.params["routes"].(helper.YamlMap)
+	m, ok := helper.IsYamlMap(s.params["routes"])
 	if ok {
-		simpleServerConfig["routes"] = helper.YamlMapToJsonMap(m)
+		simpleServerConfig["routes"] = m.ToMap()
 	}
 	simpleServerConfig["service_name"] = serviceName
 	simpleServerConfig["response_content_type"] = s.params["response_content_type"]
-	initialServerConfig, ok := s.params["config"].(helper.YamlMap)
+	initialServerConfig, ok := helper.IsYamlMap(s.params["config"])
 	if ok {
-		simpleServerConfig["config"] = helper.YamlMapToJsonMap(initialServerConfig)
+		simpleServerConfig["config"] = initialServerConfig.ToMap()
 	}
 	simpleServerConfigBytes, err := json.Marshal(simpleServerConfig)
 	if err != nil {

@@ -18,11 +18,11 @@ func (s *Service) Checker(param interface{}) (plugins.IServiceChecker, error) {
 	}
 	var checkers []ICheck
 	for _, configInterface := range configsList {
-		configYaml, ok := configInterface.(helper.YamlMap)
+		configYaml, ok := helper.IsYamlMap(configInterface)
 		if !ok {
 			return nil, fmt.Errorf("service check for postgres must be map, but it is %T (%#v)", configInterface, configInterface)
 		}
-		config := helper.YamlMapToJsonMap(configYaml)
+		config := configYaml.ToMap()
 		query, ok := config["query"].(string)
 		if !ok {
 			return nil, fmt.Errorf("service check query for postgres must be string, but it is %T %#v", config["query"], config["query"])

@@ -15,11 +15,11 @@ func init() {
 		}
 		var mounts []Mount
 		for _, mount := range paramsMounts {
-			mountYamlMap, ok := mount.(helper.YamlMap)
+			mountYamlMap, ok := helper.IsYamlMap(mount)
 			if !ok {
 				return nil, fmt.Errorf("mount should be map, but it is %T (%#v)", mount, mount)
 			}
-			mountMap := helper.YamlMapToJsonMap(mountYamlMap)
+			mountMap := mountYamlMap.ToMap()
 			name, ok := mountMap["name"].(string)
 			if !ok {
 				return nil, fmt.Errorf("mount name (string) should be defined for mount %#v", mountMap)
