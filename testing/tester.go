@@ -85,7 +85,10 @@ func (t Tester) checkRequest(saveResult plugins.FnResultSaver, variables map[str
 			}
 		} else {
 			// ... and it defined like map
-			expectedBody := (*t.expectedResponse).ToMap()
+			expectedBody, err := ApplyConverters(t.expectedResponse.ToMap())
+			if err != nil {
+				return fmt.Errorf("unable to apply converters: %v", err)
+			}
 			err = IsEqual(actualBody, expectedBody)
 			if err != nil {
 				return fmt.Errorf("invalid response: %v", err)

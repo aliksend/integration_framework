@@ -45,7 +45,7 @@ func anyTypeMatcherFunc(actualInterface interface{}, expectedInterface interface
 			return actualExpectedError(len(actualArray), len(expected), fmt.Sprintf("invalid length of key %q.", actualKey))
 		}
 		for i, actualArrayValue := range actualArray {
-			err = anyTypeMatcherFunc(actualArrayValue, expected[i], fmt.Sprintf("%s.[%d]", actualKey, i))
+			err = anyTypeMatcherFunc(actualArrayValue, expected[i], fmt.Sprintf("%s[%d]", actualKey, i))
 			if err != nil {
 				return
 			}
@@ -59,7 +59,7 @@ func anyTypeMatcherFunc(actualInterface interface{}, expectedInterface interface
 			return actualExpectedError(len(actualArray), len(expected), fmt.Sprintf("invalid length of key %q.", actualKey))
 		}
 		for i, actualArrayValue := range actualArray {
-			err = anyTypeMatcherFunc(actualArrayValue, expected[i], fmt.Sprintf("%s.[%d]", actualKey, i))
+			err = anyTypeMatcherFunc(actualArrayValue, expected[i], fmt.Sprintf("%s[%d]", actualKey, i))
 			if err != nil {
 				return
 			}
@@ -77,6 +77,8 @@ func anyTypeMatcherFunc(actualInterface interface{}, expectedInterface interface
 					return
 				}
 			}
+		case helper.YamlMap:
+			return anyTypeMatcherFunc(actual.ToMap(), expected, keyMsg)
 		case []byte:
 			parsedActual := make(map[string]interface{})
 			err := json.Unmarshal(actual, &parsedActual)
@@ -160,6 +162,11 @@ func anyTypeMatcherFunc(actualInterface interface{}, expectedInterface interface
 		}
 	case helper.YamlMap:
 		return anyTypeMatcherFunc(actualInterface, expected.ToMap(), keyMsg)
+	case CustomEqualityChecker:
+		isEqual, err := expected.IsEqualTo(actualInterface)
+		if !isEqual || err != nil {
+			return fmt.Errorf("%s\n Actual value  : %#v (%T)\n Expected value: %#v (%T)\n Error         : %v", keyMsg, actualInterface, actualInterface, expected, expected, err)
+		}
 	default:
 		if expected != actualInterface {
 			return actualExpectedError(actualInterface, expected, keyMsg)

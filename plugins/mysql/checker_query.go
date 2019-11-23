@@ -86,7 +86,7 @@ func (pc QueryChecker) Check(conn *sqlx.DB, saveResult plugins.FnResultSaver, va
 		if err != nil {
 			return fmt.Errorf("unable to apply interpolation: %v", err)
 		}
-		expectedResult, err = helper.ApplyConverters(expectedResult)
+		expectedResult, err = testing.ApplyConverters(expectedResult)
 		if err != nil {
 			return fmt.Errorf("unable to apply converters: %v", err)
 		}

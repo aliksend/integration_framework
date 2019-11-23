@@ -69,12 +69,15 @@ func (m YamlMap) ToMap() map[string]interface{} {
 	return res
 }
 
+// TODO хорошо бы с YampMap-ами заканчивать на этапе конфигурирования и далее хранить обычные map-ы и в плагины передавать обычные map-ы. по сути парсить yaml сразу в нормальные map-и и далее пользоваться ими
 func IsYamlMap(v interface{}) (YamlMap, bool) {
-	m, ok := v.(map[interface{}]interface{})
-	if !ok {
-		return nil, false
+	if m, ok := v.(map[interface{}]interface{}); ok {
+		return YamlMap(m), true
 	}
-	return YamlMap(m), true
+	if m, ok := v.(YamlMap); ok {
+		return m, true
+	}
+	return nil, false
 }
 
 func IsHttpPortAvailable(host string, port int) bool {
