@@ -77,6 +77,7 @@ type DockerComposeService struct {
 	Command     string                    `yaml:"command,omitempty"`
 	WorkingDir  string                    `yaml:"working_dir,omitempty"`
 	User        string                    `yaml:"user,omitempty"`
+	TmpFs       []string                  `yaml:"tmpfs,omitempty"`
 	waitFor     []string
 }
 

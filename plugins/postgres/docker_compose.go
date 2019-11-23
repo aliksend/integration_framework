@@ -18,6 +18,7 @@ func (s *Service) GenerateDockerComposeConfig(tmpDirectory string, serviceName s
 		Ports: []string{
 			fmt.Sprintf("%d:5432", s.port),
 		},
+		TmpFs: []string{"/var/lib/postgresql/data"},
 	}
 	applicationService.AddDependency(dockerComposeServiceName, "tcp", 5432)
 	if s.env.EnvStr != "" {
